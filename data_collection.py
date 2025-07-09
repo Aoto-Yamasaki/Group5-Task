@@ -18,7 +18,7 @@ def main():
     channel = Channel(channel_id, youtube)
     videoCount = channel.channel_info["statistics"]["videoCount"]
     Data = pd.DataFrame(channel.GetVideoData(youtube, 5))
-    Data.to_csv(f"{channel.channel_data[0]}_metadata.csv", index=False)
+    Data.to_csv(f"{channel.channel_data[0]}_test_metadata.csv", index=False)
     end_time = time.time()
     print(end_time - start_time)
 
