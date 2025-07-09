@@ -3,7 +3,7 @@ import time
 import pandas as pd
 
 def main():
-    
+
     start_time = time.time()
     youtube = Youtube().youtube
     channel_id = "UCX6OQ3DkcsbYNE6H8uQQuVA" # please write channel ID
@@ -24,8 +24,8 @@ class Youtube:
     YOUTUBE_API_VERSION,
     developerKey=API_KEY
     )
-    
-    
+
+
 
 class Channel:
     def __init__(self, channel_id,youtube):
@@ -36,7 +36,7 @@ class Channel:
         channel_age = self.channel_info["snippet"]["publishedAt"]
         total_uploads = self.channel_info["statistics"]["videoCount"]
         self.channel_data = [channel_title, subscriber_count, channel_age, total_uploads]
-    
+
     def GetVideoID(self,youtube,video_number):
         self.playlist_id = self.channel_info["contentDetails"]["relatedPlaylists"]["uploads"]
         metadata = []
@@ -51,7 +51,7 @@ class Channel:
             ).execute()
             nextPageToken = response.get("nextPageToken")
             video_number -= 50
-            self.video_ids += [it["contentDetails"]["videoId"] 
+            self.video_ids += [it["contentDetails"]["videoId"]
                   for it in response["items"]]
         response = youtube.playlistItems().list(
         part="contentDetails",
@@ -59,11 +59,11 @@ class Channel:
         maxResults=video_number,
         pageToken=nextPageToken
         ).execute()
-        self.video_ids += [it["contentDetails"]["videoId"] 
+        self.video_ids += [it["contentDetails"]["videoId"]
                   for it in response["items"]]
-            
-        
-        
+
+
+
 
     def GetVideoData(self,youtube,video_number):
         self.GetVideoID(youtube,video_number)
@@ -72,7 +72,7 @@ class Channel:
         while index < len(self.video_ids):
             videos = youtube.videos().list(
                     part = "snippet,statistics,contentDetails",
-                    id = ",".join(self.video_ids[index:index + 50])                         
+                    id = ",".join(self.video_ids[index:index + 50])
                     ).execute()
             index += 50
             for video in videos["items"]:
@@ -88,16 +88,16 @@ class Channel:
                 category = video["snippet"]["categoryId"]
                 video_data = [
                     title, thumbnail,
-                    desc_len, tags, published, 
-                    view_count, like_count, 
-                    comment_count, duration, 
+                    desc_len, tags, published,
+                    view_count, like_count,
+                    comment_count, duration,
                     category
                     ]
                 metadata.append(video_data + self.channel_data)
         sorted_metadata = pd.DataFrame(sorted(metadata, key = lambda x: int(x[5]) or 0, reverse=True))
-        sorted_metadata.columns = ["Video Title", "Thumbnail URL", "Description Length", 
-                            "Tags", "Published Data & Time", "View Count", "Like Count", 
-                            "Comment Count", "Duration", "Category", "Channel Title", 
+        sorted_metadata.columns = ["Video Title", "Thumbnail URL", "Description Length",
+                            "Tags", "Published Data & Time", "View Count", "Like Count",
+                            "Comment Count", "Duration", "Category", "Channel Title",
                             "Channel Subscriber", "Channel Age", "Total number of channel uploads"]
         return sorted_metadata
 
