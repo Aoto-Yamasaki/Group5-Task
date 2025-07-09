@@ -8,8 +8,8 @@ def main():
     youtube = Youtube().youtube
     channel_id = "UCX6OQ3DkcsbYNE6H8uQQuVA" 
     channel = Channel(channel_id, youtube)
-    videoCount = channel.channel_info["statistics"]["videoCount"]
-    Data = pd.DataFrame(channel.GetVideoData(youtube,5))
+    videoCount = int(channel.channel_info["statistics"]["videoCount"])
+    Data = pd.DataFrame(channel.GetVideoData(youtube,videoCount))
     Data.to_excel(f"{channel.channel_data[0]}_metadata.xlsx")
     end_time = time.time()
     print(end_time - start_time)
@@ -18,7 +18,7 @@ def main():
 class Youtube:
     YOUTUBE_API_SERVICE_NAME = "youtube"
     YOUTUBE_API_VERSION = "v3"
-    API_KEY = "" # Please write your API key.
+    API_KEY = "AIzaSyDlXZQ4Ymm31hHViYWCdBC2cSGhp_uUVbY" # Please write your API key.
     youtube = build(
     YOUTUBE_API_SERVICE_NAME,
     YOUTUBE_API_VERSION,
@@ -42,7 +42,7 @@ class Channel:
         metadata = []
         self.video_ids = []
         nextPageToken = None
-        while video_number > 50:
+        while int(video_number) > 50:
             response = youtube.playlistItems().list(
             part="contentDetails",
             playlistId=self.playlist_id,
@@ -111,7 +111,7 @@ class Channel:
             #     nextPageToken = playlist_items.get("nextPageToken")
             #     if not nextPageToken:
             #         break
-        sorted_metadata = pd.DataFrame(sorted(metadata, key = lambda x: int(x[6]) or 0, reverse=True))
+        sorted_metadata = pd.DataFrame(sorted(metadata, key = lambda x: int(x[5]) or 0, reverse=True))
         sorted_metadata.columns = ["Video Title", "Thumbnail URL", "Description Length", 
                             "Tags", "Published Data & Time", "View Count", "Like Count", 
                             "Comment Count", "Duration", "Category", "Channel Title", 
