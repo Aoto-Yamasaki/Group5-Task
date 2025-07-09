@@ -102,6 +102,9 @@ class YouTubeDataAnalyzer:
             "View Count"
         ]
 
+        # 8. Calculate popularity score (view count normalized by channel subscribers)
+        df["Popularity_Score"] = df["View Count"] / df["Channel Subscriber"]
+
         # Replace infinite values and very large values
         df = df.replace([np.inf, -np.inf], np.nan)
 
@@ -117,6 +120,7 @@ class YouTubeDataAnalyzer:
             "Like_Rate",
             "Comment_Rate",
             "Engagement_Rate",
+            "Popularity_Score",
         ]
 
         for col in numeric_columns:
@@ -128,16 +132,24 @@ class YouTubeDataAnalyzer:
                         upper=q99 * 10
                     )  # Cap at 10x the 99th percentile
 
-        # 8. Create popularity categories based on view count
-        df["View_Category"] = pd.qcut(
-            df["View Count"], q=3, labels=["Low", "Medium", "High"]
+        # 9. Create popularity categories based on popularity score (view count / channel subscribers)
+        df["Popularity_Category"] = pd.qcut(
+            df["Popularity_Score"], q=3, labels=["Low", "Medium", "High"]
         )
 
         # Remove missing values and invalid data
-        df = df.dropna(subset=["View Count", "Duration_Seconds", "Published_Year"])
+        df = df.dropna(
+            subset=[
+                "View Count",
+                "Duration_Seconds",
+                "Published_Year",
+                "Popularity_Score",
+                "Channel Subscriber",
+            ]
+        )
 
-        # Remove rows with zero or negative view counts
-        df = df[df["View Count"] > 0]
+        # Remove rows with zero or negative view counts and zero subscribers
+        df = df[(df["View Count"] > 0) & (df["Channel Subscriber"] > 0)]
 
         self.processed_data = df
         print(f"Processed data count: {len(df)} videos")
@@ -276,14 +288,14 @@ class YouTubeDataAnalyzer:
         return X_pca, X_scaled, feature_columns
 
     def analyze_with_svm(self, X_pca, target_type="classification"):
-        """Analyze with SVM"""
+        """Analyze with SVM using popularity score (view count / channel subscribers)"""
         if target_type == "classification":
-            # Classification: Predict view count category
+            # Classification: Predict popularity category based on popularity score
             if self.processed_data is None:
                 raise ValueError(
                     "Processed data is not available. Please call preprocess_data() first."
                 )
-            y = self.processed_data["View_Category"].dropna()
+            y = self.processed_data["Popularity_Category"].dropna()
             X_pca_filtered = X_pca[: len(y)]
 
             # Split train/test data
@@ -299,7 +311,7 @@ class YouTubeDataAnalyzer:
             y_pred = svm_classifier.predict(X_test)
             accuracy = accuracy_score(y_test, y_pred)
 
-            print("\n=== SVM Classification Results ===")
+            print("\n=== SVM Classification Results (Popularity Category) ===")
             print(f"Accuracy: {accuracy:.3f}")
             print("\nDetailed Report:")
             print(classification_report(y_test, y_pred))
@@ -307,13 +319,13 @@ class YouTubeDataAnalyzer:
             return svm_classifier, accuracy
 
         else:
-            # Regression: Predict view count directly
+            # Regression: Predict popularity score directly
             if self.processed_data is None:
                 raise ValueError(
                     "Processed data is not available. Please call preprocess_data() first."
                 )
             y = np.log1p(
-                self.processed_data["View Count"]
+                self.processed_data["Popularity_Score"]
             )  # Normalize with log transformation
             X_pca_filtered = X_pca[: len(y)]
 
@@ -331,7 +343,7 @@ class YouTubeDataAnalyzer:
             mse = mean_squared_error(y_test, y_pred)
             r2 = r2_score(y_test, y_pred)
 
-            print("\n=== SVM Regression Results ===")
+            print("\n=== SVM Regression Results (Popularity Score) ===")
             print(f"Mean Squared Error: {mse:.3f}")
             print(f"R² Score: {r2:.3f}")
 
@@ -355,14 +367,18 @@ class YouTubeDataAnalyzer:
 
         # 2. Scatter plot of first and second components
         plt.subplot(2, 3, 2)
-        views = self.processed_data["View Count"]
+        popularity_scores = self.processed_data["Popularity_Score"]
         scatter = plt.scatter(
-            X_pca[:, 0], X_pca[:, 1], c=np.log1p(views), cmap="viridis", alpha=0.6
+            X_pca[:, 0],
+            X_pca[:, 1],
+            c=np.log1p(popularity_scores),
+            cmap="viridis",
+            alpha=0.6,
         )
-        plt.colorbar(scatter, label="Log(View Count)")
+        plt.colorbar(scatter, label="Log(Popularity Score)")
         plt.xlabel("First Component")
         plt.ylabel("Second Component")
-        plt.title("Distribution in Principal Component Space")
+        plt.title("Distribution in Principal Component Space (Popularity Score)")
 
         # 3. Feature importance (First Component)
         plt.subplot(2, 3, 3)
@@ -378,37 +394,37 @@ class YouTubeDataAnalyzer:
             rotation=45,
         )
 
-        # 4. View count distribution
+        # 4. Popularity score distribution
         plt.subplot(2, 3, 4)
-        plt.hist(np.log1p(self.processed_data["View Count"]), bins=50, alpha=0.7)
-        plt.xlabel("Log(View Count)")
+        plt.hist(np.log1p(self.processed_data["Popularity_Score"]), bins=50, alpha=0.7)
+        plt.xlabel("Log(Popularity Score)")
         plt.ylabel("Frequency")
-        plt.title("View Count Distribution")
+        plt.title("Popularity Score Distribution")
 
-        # 5. Channel-wise analysis
+        # 5. Channel-wise analysis (popularity score)
         plt.subplot(2, 3, 5)
         channel_stats = (
-            self.processed_data.groupby("Channel_Name")["View Count"]
+            self.processed_data.groupby("Channel_Name")["Popularity_Score"]
             .mean()
             .sort_values(ascending=False)
         )
 
         plt.bar(range(len(channel_stats)), np.array(channel_stats.values))
         plt.xlabel("Channel")
-        plt.ylabel("Average View Count")
-        plt.title("Average View Count by Channel")
+        plt.ylabel("Average Popularity Score")
+        plt.title("Average Popularity Score by Channel")
         plt.xticks(range(len(channel_stats)), channel_stats.index.tolist(), rotation=45)
 
-        # 6. Relationship between duration and view count
+        # 6. Relationship between duration and popularity score
         plt.subplot(2, 3, 6)
         plt.scatter(
             self.processed_data["Duration_Seconds"],
-            np.log1p(self.processed_data["View Count"]),
+            np.log1p(self.processed_data["Popularity_Score"]),
             alpha=0.6,
         )
         plt.xlabel("Duration (Seconds)")
-        plt.ylabel("Log(View Count)")
-        plt.title("Duration vs View Count")
+        plt.ylabel("Log(Popularity Score)")
+        plt.title("Duration vs Popularity Score")
 
         plt.tight_layout()
         # plt.show()
@@ -421,7 +437,8 @@ class YouTubeDataAnalyzer:
                 "Processed data is not available. Please call preprocess_data() first."
             )
         print("\n" + "=" * 50)
-        print("YouTube Video View Count Analysis - Insights")
+        print("YouTube Video Popularity Analysis - Insights")
+        print("Popularity Score = View Count / Channel Subscribers")
         print("=" * 50)
 
         # 1. PCA analysis results
@@ -450,21 +467,27 @@ class YouTubeDataAnalyzer:
                 f"   Maximum View Count: {self.processed_data['View Count'].max():,.0f}"
             )
             print(
+                f"   Average Popularity Score: {self.processed_data['Popularity_Score'].mean():.4f}"
+            )
+            print(
+                f"   Maximum Popularity Score: {self.processed_data['Popularity_Score'].max():.4f}"
+            )
+            print(
                 f"   Average Video Length: {self.processed_data['Duration_Seconds'].mean()/60:.1f} minutes"
             )
         else:
             print("Processed data is not available.")
 
-        # 4. Top 3 Channels by Average View Count
-        print("\n4. Top 3 Channels by Average View Count:")
+        # 4. Top 3 Channels by Average Popularity Score
+        print("\n4. Top 3 Channels by Average Popularity Score:")
         if self.processed_data is not None:
             channel_stats = (
-                self.processed_data.groupby("Channel_Name")["View Count"]
+                self.processed_data.groupby("Channel_Name")["Popularity_Score"]
                 .mean()
                 .sort_values(ascending=False)
             )
-            for i, (channel, views) in enumerate(channel_stats.head(3).items()):
-                print(f"   {i+1}. {channel}: {views:,.0f} views")
+            for i, (channel, score) in enumerate(channel_stats.head(3).items()):
+                print(f"   {i+1}. {channel}: {score:.4f}")
         else:
             print("Processed data is not available for channel analysis.")
 
@@ -472,8 +495,10 @@ class YouTubeDataAnalyzer:
 def main():
     # Execute analysis
     analyzer = YouTubeDataAnalyzer(
-        "/Users/user/Documents/tmp/assginment/yugoukagakuron/youtube/Group5-Task/metadata"
+        "./metadata"
     )
+    # Output directory
+    output_dir = "./output"
 
     print("Starting YouTube video metadata analysis...")
 
@@ -495,7 +520,8 @@ def main():
     svm_regressor, r2 = analyzer.analyze_with_svm(X_pca, target_type="regression")
 
     # Visualize results
-    analyzer.visualize_results(X_pca, feature_columns, "youtube_analysis_results.png")
+    visualize_results_output = os.path.join(output_dir, "youtube_analysis_results.png")
+    analyzer.visualize_results(X_pca, feature_columns, visualize_results_output)
 
     # Generate insights
     analyzer.generate_insights(feature_columns)
