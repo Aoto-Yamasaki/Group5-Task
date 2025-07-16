@@ -103,8 +103,8 @@ class YouTubeDataAnalyzer:
         ]
 
         # 8. Calculate popularity score (view count normalized by channel subscribers)
-        df["Popularity_Score"] = df["View Count"] / df["Channel Subscriber"]
-        # df["Popularity_Score"] = df["View Count"]
+        # df["Popularity_Score"] = df["View Count"] / df["Channel Subscriber"]
+        df["Popularity_Score"] = df["View Count"]
 
         # Replace infinite values and very large values
         df = df.replace([np.inf, -np.inf], np.nan)

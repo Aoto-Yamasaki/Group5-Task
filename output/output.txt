@@ -16,23 +16,23 @@ PCA completed: 11 components
 Cumulative explained variance: 0.970
 
 === SVM Classification Results (Popularity Category) ===
-Accuracy: 0.702
+Accuracy: 0.710
 
 Detailed Report:
               precision    recall  f1-score   support
 
-        High       0.74      0.69      0.71       366
-         Low       0.83      0.76      0.80       364
-      Medium       0.56      0.66      0.61       365
+        High       0.83      0.68      0.75       366
+         Low       0.75      0.74      0.75       364
+      Medium       0.59      0.70      0.64       365
 
-    accuracy                           0.70      1095
-   macro avg       0.71      0.70      0.71      1095
-weighted avg       0.71      0.70      0.71      1095
+    accuracy                           0.71      1095
+   macro avg       0.72      0.71      0.71      1095
+weighted avg       0.72      0.71      0.71      1095
 
 
 === SVM Regression Results (Popularity Score) ===
-Mean Squared Error: 0.032
-R² Score: 0.507
+Mean Squared Error: 1.306
+R² Score: 0.756
 
 ==================================================
 YouTube Video Popularity Analysis - Insights
@@ -118,14 +118,14 @@ Top 5 contributing features for Component 5:
    Total Videos: 5,472
    Average View Count: 20,874,751
    Maximum View Count: 1,584,098,115
-   Average Popularity Score: 0.2997
-   Maximum Popularity Score: 13.2135
+   Average Popularity Score: 20874750.8271
+   Maximum Popularity Score: 1584098115.0000
    Average Video Length: 13.0 minutes
 
 4. Top 3 Channels by Average Popularity Score:
-   1. Mark Rober: 0.8678
-   2. The Slow Mo Guys: 0.4934
-   3. Rachel & Jun's Adventures!: 0.4905
+   1. MrBeast: 101328654.9819
+   2. Mark Rober: 60315231.5413
+   3. Veritasium: 7691001.8874
 
 ================================================================================
 PCA Component Equations
