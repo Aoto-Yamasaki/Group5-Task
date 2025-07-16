@@ -104,6 +104,7 @@ class YouTubeDataAnalyzer:
 
         # 8. Calculate popularity score (view count normalized by channel subscribers)
         df["Popularity_Score"] = df["View Count"] / df["Channel Subscriber"]
+        # df["Popularity_Score"] = df["View Count"]
 
         # Replace infinite values and very large values
         df = df.replace([np.inf, -np.inf], np.nan)
@@ -368,17 +369,25 @@ class YouTubeDataAnalyzer:
         # 2. Scatter plot of first and second components
         plt.subplot(2, 3, 2)
         popularity_scores = self.processed_data["Popularity_Score"]
+
+        # Filter out low popularity scores
+        mask = popularity_scores >= 0.0
+        X_pca_filtered = X_pca[mask]
+        popularity_scores_filtered = popularity_scores[mask]
+
         scatter = plt.scatter(
-            X_pca[:, 0],
-            X_pca[:, 1],
-            c=np.log1p(popularity_scores),
+            X_pca_filtered[:, 0],
+            X_pca_filtered[:, 1],
+            c=np.log1p(popularity_scores_filtered),
             cmap="viridis",
             alpha=0.6,
         )
         plt.colorbar(scatter, label="Log(Popularity Score)")
         plt.xlabel("First Component")
+        # plt.xlim(-4, 4)
+        # plt.ylim(-4, 4)
         plt.ylabel("Second Component")
-        plt.title("Distribution in Principal Component Space (Popularity Score)")
+        plt.title("Distribution in Principal Component Space (Popularity Score >= 0.5)")
 
         # 3. Feature importance (First Component)
         plt.subplot(2, 3, 3)
@@ -441,6 +450,9 @@ class YouTubeDataAnalyzer:
         print("Popularity Score = View Count / Channel Subscribers")
         print("=" * 50)
 
+        # Print PCA component equations
+        self.print_pca_components(feature_columns)
+
         # 1. PCA analysis results
         print("\n1. PCA Analysis Results:")
         for i, ratio in enumerate(self.pca.explained_variance_ratio_[:5]):
@@ -491,12 +503,58 @@ class YouTubeDataAnalyzer:
         else:
             print("Processed data is not available for channel analysis.")
 
+    def print_pca_components(self, feature_columns, n_components=5):
+        """Print PCA component equations"""
+        if self.pca is None:
+            raise ValueError(
+                "PCA has not been performed yet. Please call perform_pca() first."
+            )
+
+        print("\n" + "=" * 80)
+        print("PCA Component Equations")
+        print("=" * 80)
+
+        # Display up to n_components or the total number of components, whichever is smaller
+        n_display = min(n_components, len(self.pca.components_))
+
+        for i in range(n_display):
+            print(
+                f"\nComponent {i+1} (Explained Variance Ratio: {self.pca.explained_variance_ratio_[i]:.4f}):"
+            )
+            print("-" * 60)
+
+            # Get the coefficients for this component
+            coefficients = self.pca.components_[i]
+
+            # Create the equation string
+            equation_parts = []
+            for j, coef in enumerate(coefficients):
+                feature_name = feature_columns[j]
+                if coef >= 0 and len(equation_parts) > 0:
+                    equation_parts.append(f" + {coef:.4f} * {feature_name}")
+                else:
+                    equation_parts.append(f"{coef:.4f} * {feature_name}")
+
+            equation = "PC{} = ".format(i + 1) + "".join(equation_parts)
+            print(equation)
+
+            # Also show the top contributing features
+            print(f"\nTop 5 contributing features for Component {i+1}:")
+            feature_importance = np.abs(coefficients)
+            indices = np.argsort(feature_importance)[::-1]
+            for k in range(min(5, len(indices))):
+                feature_idx = indices[k]
+                contribution = coefficients[feature_idx]
+                print(
+                    f"  {k+1}. {feature_columns[feature_idx]}: {contribution:.4f} (|{abs(contribution):.4f}|)"
+                )
+
+        print("\n" + "=" * 80)
+
 
 def main():
     # Execute analysis
-    analyzer = YouTubeDataAnalyzer(
-        "./metadata"
-    )
+    analyzer = YouTubeDataAnalyzer("./metadata")
     # Output directory
     output_dir = "./output"
 
@@ -525,6 +583,9 @@ def main():
 
     # Generate insights
     analyzer.generate_insights(feature_columns)
+
+    # Print PCA components
+    analyzer.print_pca_components(feature_columns, n_components=5)
 
     print("\nAnalysis complete!")
 
