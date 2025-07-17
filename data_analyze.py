@@ -18,6 +18,13 @@ import re
 from datetime import datetime
 import warnings
 
+from sklearn.pipeline import Pipeline
+from sklearn.svm import LinearSVC
+from sklearn.model_selection import GridSearchCV
+from sklearn.metrics import ConfusionMatrixDisplay, RocCurveDisplay
+
+
+
 warnings.filterwarnings("ignore")
 
 # Set font for English
@@ -103,7 +110,8 @@ class YouTubeDataAnalyzer:
         ]
 
         # 8. Calculate popularity score (view count normalized by channel subscribers)
-        df["Popularity_Score"] = df["View Count"] / df["Channel Subscriber"]
+        # df["Popularity_Score"] = df["View Count"] / df["Channel Subscriber"]
+        df["Popularity_Score"] = df["View Count"]
 
         # Replace infinite values and very large values
         df = df.replace([np.inf, -np.inf], np.nan)
@@ -303,6 +311,8 @@ class YouTubeDataAnalyzer:
                 X_pca_filtered, y, test_size=0.2, random_state=42, stratify=y
             )
 
+            self._last_split_cls = (X_train, X_test, y_train, y_test)
+            
             # SVM classifier
             svm_classifier = SVC(kernel="rbf", random_state=42)
             svm_classifier.fit(X_train, y_train)
@@ -334,6 +344,8 @@ class YouTubeDataAnalyzer:
                 X_pca_filtered, y, test_size=0.2, random_state=42
             )
 
+            self._last_split_reg = (X_train, X_test, y_train, y_test)
+
             # SVM regressor
             svm_regressor = SVR(kernel="rbf")
             svm_regressor.fit(X_train, y_train)
@@ -348,6 +360,142 @@ class YouTubeDataAnalyzer:
             print(f"R² Score: {r2:.3f}")
 
             return svm_regressor, r2
+        
+    
+    def plot_svm_classification_results(self,
+                                    clf,
+                                    X_train, X_test,
+                                    y_train, y_test,
+                                    X_pca_2d=None,
+                                    fname="svm_classification_plots.png"):
+        """
+        • Confusion‑matrix heat‑map
+        • If binary → ROC 曲線
+          Else      → Precision / Recall per class
+        • (optional) decision regions on PC1–PC2
+        """
+        from sklearn.metrics import (precision_recall_fscore_support,
+                                     ConfusionMatrixDisplay)
+        import matplotlib.pyplot as plt
+        import numpy as np
+        import seaborn as sns
+
+        classes = np.unique(y_test)
+        n_class = len(classes)
+
+        plt.figure(figsize=(14, 4))
+
+        # 1️⃣  Confusion matrix
+        plt.subplot(1, 3, 1)
+        ConfusionMatrixDisplay.from_estimator(
+            clf, X_test, y_test, cmap="Blues", ax=plt.gca(), colorbar=False
+        )
+        plt.title("Confusion matrix")
+
+        # 2️⃣  ROC or PR‑bars
+        plt.subplot(1, 3, 2)
+        if n_class == 2:            # ── binary ──────────────────
+            from sklearn.metrics import RocCurveDisplay
+            RocCurveDisplay.from_estimator(
+                clf, X_test, y_test,
+                ax=plt.gca(),
+                plot_chance_level=True
+            )
+            plt.title("ROC curve")
+        else:                       # ── multi‑class ─────────────
+            prec, rec, f1, _ = precision_recall_fscore_support(
+                y_test, clf.predict(X_test), labels=classes, zero_division=0
+            )
+            x = np.arange(n_class)
+            plt.bar(x-0.2, prec, 0.4, label="Precision")
+            plt.bar(x+0.2, rec,  0.4, label="Recall")
+            plt.xticks(x, classes, rotation=30)
+            plt.ylim(0, 1)
+            plt.legend()
+            plt.title("Precision / Recall by class")
+
+        # 3️⃣  Decision regions (optional)
+        # ─── Decision regions (optional) ─────────────────────────────
+        if X_pca_2d is not None and X_pca_2d.shape[1] >= 2:
+            from sklearn.svm import SVC
+            ax = plt.subplot(1, 3, 3)
+        
+            # ◉ ① 文字列ラベル → 数値に変換
+            class_to_int = {lbl: i for i, lbl in enumerate(classes)}
+            y_train_num  = np.array([class_to_int[lbl] for lbl in y_train])
+        
+            # ◉ ② 2D 用の SVM を学習
+            clf2d = SVC(kernel="rbf", gamma="auto").fit(
+                X_pca_2d[: len(y_train)], y_train_num
+            )
+        
+            # ◉ ③ メッシュグリッド作成
+            x_min, x_max = X_pca_2d[:, 0].min() - 0.5, X_pca_2d[:, 0].max() + 0.5
+            y_min, y_max = X_pca_2d[:, 1].min() - 0.5, X_pca_2d[:, 1].max() + 0.5
+            xx, yy = np.meshgrid(
+                np.linspace(x_min, x_max, 200),
+                np.linspace(y_min, y_max, 200),
+            )
+        
+            Z = clf2d.predict(np.c_[xx.ravel(), yy.ravel()]).reshape(xx.shape)
+        
+            # ◉ ④ 数値 Z なら contourf OK
+            cmap = sns.color_palette("pastel", n_colors=n_class)
+            ax.contourf(xx, yy, Z, alpha=0.3, levels=np.arange(-0.5, n_class, 1), colors=cmap)
+        
+            # ◉ ⑤ テスト点を描画
+            y_test_num = np.array([class_to_int[lbl] for lbl in y_test])
+            ax.scatter(
+                X_pca_2d[len(y_train) :, 0],
+                X_pca_2d[len(y_train) :, 1],
+                c=y_test_num,
+                edgecolor="k",
+                cmap="viridis",
+                alpha=0.7,
+            )
+            ax.set_xlabel("PC1")
+            ax.set_ylabel("PC2")
+            ax.set_title("Decision regions (PC1–PC2)")
+
+
+        plt.tight_layout()
+        plt.savefig(fname, dpi=300)
+        plt.close()
+        print(f"Classification plots saved → {fname}")
+    # -----------------------------------------------------------------
+    def plot_svm_regression_results(self,
+                                    svr,
+                                    X_train, X_test,
+                                    y_train, y_test,
+                                    fname="svm_regression_plots.png"):
+        """
+        • Predicted vs. actual scatter
+        • Residual histogram
+        """
+        y_pred = svr.predict(X_test)
+
+        plt.figure(figsize=(10, 4))
+
+        # 1️⃣  Predicted vs actual
+        plt.subplot(1, 2, 1)
+        sns.scatterplot(x=y_test, y=y_pred, alpha=.6)
+        plt.plot([y_test.min(), y_test.max()],
+                 [y_test.min(), y_test.max()], "--", color="grey")
+        plt.xlabel("Actual log‑popularity")
+        plt.ylabel("Predicted")
+        plt.title("Predicted vs. actual")
+
+        # 2️⃣  Residuals
+        plt.subplot(1, 2, 2)
+        residuals = y_test - y_pred
+        sns.histplot(residuals, bins=40, kde=True)
+        plt.xlabel("Residuals"); plt.ylabel("Count")
+        plt.title("Residual distribution")
+
+        plt.tight_layout()
+        plt.savefig(fname, dpi=300)
+        plt.close()
+        print(f"Regression plots saved → {fname}")
 
     def visualize_results(self, X_pca, feature_columns, output_file):
         """Visualize results"""
@@ -492,6 +640,7 @@ class YouTubeDataAnalyzer:
             print("Processed data is not available for channel analysis.")
 
 
+
 def main():
     # Execute analysis
     analyzer = YouTubeDataAnalyzer(
@@ -519,15 +668,30 @@ def main():
     # SVM analysis (regression)
     svm_regressor, r2 = analyzer.analyze_with_svm(X_pca, target_type="regression")
 
-    # Visualize results
+    # Visualize results (PCA)
     visualize_results_output = os.path.join(output_dir, "youtube_analysis_results.png")
     analyzer.visualize_results(X_pca, feature_columns, visualize_results_output)
+
+
+    #Visualize results (SVM classification)
+    Xtr_c, Xte_c, ytr_c, yte_c = analyzer._last_split_cls
+    analyzer.plot_svm_classification_results(
+        svm_classifier, Xtr_c, Xte_c, ytr_c, yte_c,
+        X_pca_2d=X_pca[:, :2],
+        fname=os.path.join(output_dir, "svm_classification.png")
+    )
+
+    #Visualize results (SVM regression)
+    Xtr_r, Xte_r, ytr_r, yte_r = analyzer._last_split_reg
+    analyzer.plot_svm_regression_results(
+        svm_regressor, Xtr_r, Xte_r, ytr_r, yte_r,
+        fname=os.path.join(output_dir, "svm_regression.png")
+    )
 
     # Generate insights
     analyzer.generate_insights(feature_columns)
 
     print("\nAnalysis complete!")
-
 
 if __name__ == "__main__":
     main()
