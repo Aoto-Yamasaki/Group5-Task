@@ -584,7 +584,7 @@ class YouTubeDataAnalyzer:
 
         plt.tight_layout()
         # plt.show()
-        plt.savefig(output_file, dpi=300)
+        # plt.savefig(output_file, dpi=300)
 
     def generate_insights(self, feature_columns):
         """Generate insights from analysis results"""
@@ -716,6 +716,7 @@ def main():
 
     # Perform PCA
     X_pca, X_scaled, feature_columns = analyzer.perform_pca()
+    number_Components = len(analyzer.pca.components_)
 
     # SVM analysis (classification)
     svm_classifier, accuracy = analyzer.analyze_with_svm(
@@ -725,8 +726,10 @@ def main():
     # SVM analysis (regression)
     svm_regressor, r2 = analyzer.analyze_with_svm(X_pca, target_type="regression")
 
+    
+
     # Visualize results (PCA)
-    visualize_results_output = os.path.join(output_dir, "youtube_analysis_results.png")
+    visualize_results_output = os.path.join(output_dir, f"youtube_analysis_results_{number_Components}components.png")
     analyzer.visualize_results(X_pca, feature_columns, visualize_results_output)
 
 
@@ -735,14 +738,14 @@ def main():
     analyzer.plot_svm_classification_results(
         svm_classifier, Xtr_c, Xte_c, ytr_c, yte_c,
         X_pca_2d=X_pca[:, :2],
-        fname=os.path.join(output_dir, "svm_classification.png")
+        fname=os.path.join(output_dir, f"svm_classification_{number_Components}components.png")
     )
 
     #Visualize results (SVM regression)
     Xtr_r, Xte_r, ytr_r, yte_r = analyzer._last_split_reg
     analyzer.plot_svm_regression_results(
         svm_regressor, Xtr_r, Xte_r, ytr_r, yte_r,
-        fname=os.path.join(output_dir, "svm_regression.png")
+        fname=os.path.join(output_dir, f"svm_regression_{number_Components}components.png")
     )
 
     # Generate insights
