@@ -1,0 +1,191 @@
+Starting YouTube video metadata analysis...
+Loaded: Rachel & Jun's Adventures! (268 videos)
+Loaded: MrBeast (883 videos)
+Loaded: Mark Rober (218 videos)
+Loaded: Yes Theory (425 videos)
+Loaded: Peter McKinnon (751 videos)
+Loaded: Veritasium (444 videos)
+Loaded: The Slow Mo Guys (361 videos)
+Loaded: NikkieTutorials (916 videos)
+Loaded: Matt D'Avella (458 videos)
+Loaded: LegalEagle (755 videos)
+
+Total videos: 5479
+Processed data count: 5472 videos
+PCA completed: 11 components
+Cumulative explained variance: 0.970
+
+=== SVM Classification Results (Popularity Category) ===
+Accuracy: 0.710
+
+Detailed Report:
+              precision    recall  f1-score   support
+
+        High       0.83      0.68      0.75       366
+         Low       0.75      0.74      0.75       364
+      Medium       0.59      0.70      0.64       365
+
+    accuracy                           0.71      1095
+   macro avg       0.72      0.71      0.71      1095
+weighted avg       0.72      0.71      0.71      1095
+
+
+=== SVM Regression Results (Popularity Score) ===
+Mean Squared Error: 1.306
+R² Score: 0.756
+
+==================================================
+YouTube Video Popularity Analysis - Insights
+Popularity Score = View Count / Channel Subscribers
+==================================================
+
+================================================================================
+PCA Component Equations
+================================================================================
+
+Component 1 (Explained Variance Ratio: 0.1803):
+------------------------------------------------------------
+PC1 = 0.0617 * Duration_Seconds + 0.4181 * Description Length + 0.1733 * Tags_Count + 0.1195 * Title_Length-0.3185 * Channel Subscriber + 0.4445 * Channel_Age_Days-0.0110 * Total number of channel uploads + 0.4962 * Published_Year-0.0243 * Published_Month-0.0740 * Published_DayOfWeek + 0.1420 * Published_Hour + 0.4267 * Like_Rate + 0.1533 * Comment_Rate
+
+Top 5 contributing features for Component 1:
+  1. Published_Year: 0.4962 (|0.4962|)
+  2. Channel_Age_Days: 0.4445 (|0.4445|)
+  3. Like_Rate: 0.4267 (|0.4267|)
+  4. Description Length: 0.4181 (|0.4181|)
+  5. Channel Subscriber: -0.3185 (|0.3185|)
+
+Component 2 (Explained Variance Ratio: 0.1478):
+------------------------------------------------------------
+PC2 = 0.0052 * Duration_Seconds + 0.3127 * Description Length + 0.5963 * Tags_Count + 0.3400 * Title_Length-0.3034 * Channel Subscriber-0.3944 * Channel_Age_Days + 0.1441 * Total number of channel uploads-0.3617 * Published_Year + 0.0203 * Published_Month-0.0209 * Published_DayOfWeek + 0.0060 * Published_Hour-0.0938 * Like_Rate + 0.1487 * Comment_Rate
+
+Top 5 contributing features for Component 2:
+  1. Tags_Count: 0.5963 (|0.5963|)
+  2. Channel_Age_Days: -0.3944 (|0.3944|)
+  3. Published_Year: -0.3617 (|0.3617|)
+  4. Title_Length: 0.3400 (|0.3400|)
+  5. Description Length: 0.3127 (|0.3127|)
+
+Component 3 (Explained Variance Ratio: 0.1212):
+------------------------------------------------------------
+PC3 = -0.0180 * Duration_Seconds + 0.0095 * Description Length + 0.0070 * Tags_Count + 0.0144 * Title_Length + 0.4912 * Channel Subscriber + 0.0097 * Channel_Age_Days + 0.6551 * Total number of channel uploads-0.0447 * Published_Year + 0.0655 * Published_Month + 0.1618 * Published_DayOfWeek + 0.3880 * Published_Hour + 0.1971 * Like_Rate + 0.3270 * Comment_Rate
+
+Top 5 contributing features for Component 3:
+  1. Total number of channel uploads: 0.6551 (|0.6551|)
+  2. Channel Subscriber: 0.4912 (|0.4912|)
+  3. Published_Hour: 0.3880 (|0.3880|)
+  4. Comment_Rate: 0.3270 (|0.3270|)
+  5. Like_Rate: 0.1971 (|0.1971|)
+
+Component 4 (Explained Variance Ratio: 0.0994):
+------------------------------------------------------------
+PC4 = -0.1828 * Duration_Seconds-0.1775 * Description Length + 0.0001 * Tags_Count-0.4109 * Title_Length-0.1112 * Channel Subscriber-0.1553 * Channel_Age_Days-0.0703 * Total number of channel uploads-0.1719 * Published_Year-0.0713 * Published_Month-0.3460 * Published_DayOfWeek-0.2773 * Published_Hour + 0.4173 * Like_Rate + 0.5652 * Comment_Rate
+
+Top 5 contributing features for Component 4:
+  1. Comment_Rate: 0.5652 (|0.5652|)
+  2. Like_Rate: 0.4173 (|0.4173|)
+  3. Title_Length: -0.4109 (|0.4109|)
+  4. Published_DayOfWeek: -0.3460 (|0.3460|)
+  5. Published_Hour: -0.2773 (|0.2773|)
+
+Component 5 (Explained Variance Ratio: 0.0832):
+------------------------------------------------------------
+PC5 = 0.6715 * Duration_Seconds + 0.0732 * Description Length-0.1267 * Tags_Count + 0.1022 * Title_Length + 0.0911 * Channel Subscriber-0.0959 * Channel_Age_Days-0.1150 * Total number of channel uploads + 0.0208 * Published_Year + 0.2204 * Published_Month + 0.4130 * Published_DayOfWeek-0.4058 * Published_Hour + 0.1058 * Like_Rate + 0.3016 * Comment_Rate
+
+Top 5 contributing features for Component 5:
+  1. Duration_Seconds: 0.6715 (|0.6715|)
+  2. Published_DayOfWeek: 0.4130 (|0.4130|)
+  3. Published_Hour: -0.4058 (|0.4058|)
+  4. Comment_Rate: 0.3016 (|0.3016|)
+  5. Published_Month: 0.2204 (|0.2204|)
+
+================================================================================
+
+1. PCA Analysis Results:
+   Contribution of Component 1: 0.180
+   Contribution of Component 2: 0.148
+   Contribution of Component 3: 0.121
+   Contribution of Component 4: 0.099
+   Contribution of Component 5: 0.083
+
+2. Important Features (First Component):
+   Published_Year: 0.496
+   Channel_Age_Days: 0.444
+   Like_Rate: 0.427
+   Description Length: 0.418
+   Channel Subscriber: 0.319
+
+3. Statistical Summary:
+   Total Videos: 5,472
+   Average View Count: 20,874,751
+   Maximum View Count: 1,584,098,115
+   Average Popularity Score: 20874750.8271
+   Maximum Popularity Score: 1584098115.0000
+   Average Video Length: 13.0 minutes
+
+4. Top 3 Channels by Average Popularity Score:
+   1. MrBeast: 101328654.9819
+   2. Mark Rober: 60315231.5413
+   3. Veritasium: 7691001.8874
+
+================================================================================
+PCA Component Equations
+================================================================================
+
+Component 1 (Explained Variance Ratio: 0.1803):
+------------------------------------------------------------
+PC1 = 0.0617 * Duration_Seconds + 0.4181 * Description Length + 0.1733 * Tags_Count + 0.1195 * Title_Length-0.3185 * Channel Subscriber + 0.4445 * Channel_Age_Days-0.0110 * Total number of channel uploads + 0.4962 * Published_Year-0.0243 * Published_Month-0.0740 * Published_DayOfWeek + 0.1420 * Published_Hour + 0.4267 * Like_Rate + 0.1533 * Comment_Rate
+
+Top 5 contributing features for Component 1:
+  1. Published_Year: 0.4962 (|0.4962|)
+  2. Channel_Age_Days: 0.4445 (|0.4445|)
+  3. Like_Rate: 0.4267 (|0.4267|)
+  4. Description Length: 0.4181 (|0.4181|)
+  5. Channel Subscriber: -0.3185 (|0.3185|)
+
+Component 2 (Explained Variance Ratio: 0.1478):
+------------------------------------------------------------
+PC2 = 0.0052 * Duration_Seconds + 0.3127 * Description Length + 0.5963 * Tags_Count + 0.3400 * Title_Length-0.3034 * Channel Subscriber-0.3944 * Channel_Age_Days + 0.1441 * Total number of channel uploads-0.3617 * Published_Year + 0.0203 * Published_Month-0.0209 * Published_DayOfWeek + 0.0060 * Published_Hour-0.0938 * Like_Rate + 0.1487 * Comment_Rate
+
+Top 5 contributing features for Component 2:
+  1. Tags_Count: 0.5963 (|0.5963|)
+  2. Channel_Age_Days: -0.3944 (|0.3944|)
+  3. Published_Year: -0.3617 (|0.3617|)
+  4. Title_Length: 0.3400 (|0.3400|)
+  5. Description Length: 0.3127 (|0.3127|)
+
+Component 3 (Explained Variance Ratio: 0.1212):
+------------------------------------------------------------
+PC3 = -0.0180 * Duration_Seconds + 0.0095 * Description Length + 0.0070 * Tags_Count + 0.0144 * Title_Length + 0.4912 * Channel Subscriber + 0.0097 * Channel_Age_Days + 0.6551 * Total number of channel uploads-0.0447 * Published_Year + 0.0655 * Published_Month + 0.1618 * Published_DayOfWeek + 0.3880 * Published_Hour + 0.1971 * Like_Rate + 0.3270 * Comment_Rate
+
+Top 5 contributing features for Component 3:
+  1. Total number of channel uploads: 0.6551 (|0.6551|)
+  2. Channel Subscriber: 0.4912 (|0.4912|)
+  3. Published_Hour: 0.3880 (|0.3880|)
+  4. Comment_Rate: 0.3270 (|0.3270|)
+  5. Like_Rate: 0.1971 (|0.1971|)
+
+Component 4 (Explained Variance Ratio: 0.0994):
+------------------------------------------------------------
+PC4 = -0.1828 * Duration_Seconds-0.1775 * Description Length + 0.0001 * Tags_Count-0.4109 * Title_Length-0.1112 * Channel Subscriber-0.1553 * Channel_Age_Days-0.0703 * Total number of channel uploads-0.1719 * Published_Year-0.0713 * Published_Month-0.3460 * Published_DayOfWeek-0.2773 * Published_Hour + 0.4173 * Like_Rate + 0.5652 * Comment_Rate
+
+Top 5 contributing features for Component 4:
+  1. Comment_Rate: 0.5652 (|0.5652|)
+  2. Like_Rate: 0.4173 (|0.4173|)
+  3. Title_Length: -0.4109 (|0.4109|)
+  4. Published_DayOfWeek: -0.3460 (|0.3460|)
+  5. Published_Hour: -0.2773 (|0.2773|)
+
+Component 5 (Explained Variance Ratio: 0.0832):
+------------------------------------------------------------
+PC5 = 0.6715 * Duration_Seconds + 0.0732 * Description Length-0.1267 * Tags_Count + 0.1022 * Title_Length + 0.0911 * Channel Subscriber-0.0959 * Channel_Age_Days-0.1150 * Total number of channel uploads + 0.0208 * Published_Year + 0.2204 * Published_Month + 0.4130 * Published_DayOfWeek-0.4058 * Published_Hour + 0.1058 * Like_Rate + 0.3016 * Comment_Rate
+
+Top 5 contributing features for Component 5:
+  1. Duration_Seconds: 0.6715 (|0.6715|)
+  2. Published_DayOfWeek: 0.4130 (|0.4130|)
+  3. Published_Hour: -0.4058 (|0.4058|)
+  4. Comment_Rate: 0.3016 (|0.3016|)
+  5. Published_Month: 0.2204 (|0.2204|)
+
+================================================================================
+
+Analysis complete!
