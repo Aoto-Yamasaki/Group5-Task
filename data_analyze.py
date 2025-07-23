@@ -24,7 +24,6 @@ from sklearn.model_selection import GridSearchCV
 from sklearn.metrics import ConfusionMatrixDisplay, RocCurveDisplay
 
 
-
 warnings.filterwarnings("ignore")
 
 # Set font for English
@@ -312,7 +311,7 @@ class YouTubeDataAnalyzer:
             )
 
             self._last_split_cls = (X_train, X_test, y_train, y_test)
-            
+
             # SVM classifier
             svm_classifier = SVC(kernel="rbf", random_state=42)
             svm_classifier.fit(X_train, y_train)
@@ -360,22 +359,27 @@ class YouTubeDataAnalyzer:
             print(f"R² Score: {r2:.3f}")
 
             return svm_regressor, r2
-        
-    
-    def plot_svm_classification_results(self,
-                                    clf,
-                                    X_train, X_test,
-                                    y_train, y_test,
-                                    X_pca_2d=None,
-                                    fname="svm_classification_plots.png"):
+
+    def plot_svm_classification_results(
+        self,
+        clf,
+        X_train,
+        X_test,
+        y_train,
+        y_test,
+        X_pca_2d=None,
+        fname="svm_classification_plots.png",
+    ):
         """
         • Confusion‑matrix heat‑map
         • If binary → ROC 曲線
           Else      → Precision / Recall per class
         • (optional) decision regions on PC1–PC2
         """
-        from sklearn.metrics import (precision_recall_fscore_support,
-                                     ConfusionMatrixDisplay)
+        from sklearn.metrics import (
+            precision_recall_fscore_support,
+            ConfusionMatrixDisplay,
+        )
         import matplotlib.pyplot as plt
         import numpy as np
         import seaborn as sns
@@ -394,21 +398,20 @@ class YouTubeDataAnalyzer:
 
         # 2️⃣  ROC or PR‑bars
         plt.subplot(1, 3, 2)
-        if n_class == 2:            # ── binary ──────────────────
+        if n_class == 2:  # ── binary ──────────────────
             from sklearn.metrics import RocCurveDisplay
+
             RocCurveDisplay.from_estimator(
-                clf, X_test, y_test,
-                ax=plt.gca(),
-                plot_chance_level=True
+                clf, X_test, y_test, ax=plt.gca(), plot_chance_level=True
             )
             plt.title("ROC curve")
-        else:                       # ── multi‑class ─────────────
+        else:  # ── multi‑class ─────────────
             prec, rec, f1, _ = precision_recall_fscore_support(
                 y_test, clf.predict(X_test), labels=classes, zero_division=0
             )
             x = np.arange(n_class)
-            plt.bar(x-0.2, prec, 0.4, label="Precision")
-            plt.bar(x+0.2, rec,  0.4, label="Recall")
+            plt.bar(x - 0.2, prec, 0.4, label="Precision")
+            plt.bar(x + 0.2, rec, 0.4, label="Recall")
             plt.xticks(x, classes, rotation=30)
             plt.ylim(0, 1)
             plt.legend()
@@ -418,17 +421,18 @@ class YouTubeDataAnalyzer:
         # ─── Decision regions (optional) ─────────────────────────────
         if X_pca_2d is not None and X_pca_2d.shape[1] >= 2:
             from sklearn.svm import SVC
+
             ax = plt.subplot(1, 3, 3)
-        
+
             # ◉ ① 文字列ラベル → 数値に変換
             class_to_int = {lbl: i for i, lbl in enumerate(classes)}
-            y_train_num  = np.array([class_to_int[lbl] for lbl in y_train])
-        
+            y_train_num = np.array([class_to_int[lbl] for lbl in y_train])
+
             # ◉ ② 2D 用の SVM を学習
             clf2d = SVC(kernel="rbf", gamma="auto").fit(
                 X_pca_2d[: len(y_train)], y_train_num
             )
-        
+
             # ◉ ③ メッシュグリッド作成
             x_min, x_max = X_pca_2d[:, 0].min() - 0.5, X_pca_2d[:, 0].max() + 0.5
             y_min, y_max = X_pca_2d[:, 1].min() - 0.5, X_pca_2d[:, 1].max() + 0.5
@@ -436,13 +440,15 @@ class YouTubeDataAnalyzer:
                 np.linspace(x_min, x_max, 200),
                 np.linspace(y_min, y_max, 200),
             )
-        
+
             Z = clf2d.predict(np.c_[xx.ravel(), yy.ravel()]).reshape(xx.shape)
-        
+
             # ◉ ④ 数値 Z なら contourf OK
             cmap = sns.color_palette("pastel", n_colors=n_class)
-            ax.contourf(xx, yy, Z, alpha=0.3, levels=np.arange(-0.5, n_class, 1), colors=cmap)
-        
+            ax.contourf(
+                xx, yy, Z, alpha=0.3, levels=np.arange(-0.5, n_class, 1), colors=cmap
+            )
+
             # ◉ ⑤ テスト点を描画
             y_test_num = np.array([class_to_int[lbl] for lbl in y_test])
             ax.scatter(
@@ -457,17 +463,15 @@ class YouTubeDataAnalyzer:
             ax.set_ylabel("PC2")
             ax.set_title("Decision regions (PC1–PC2)")
 
-
         plt.tight_layout()
         plt.savefig(fname, dpi=300)
         plt.close()
         print(f"Classification plots saved → {fname}")
+
     # -----------------------------------------------------------------
-    def plot_svm_regression_results(self,
-                                    svr,
-                                    X_train, X_test,
-                                    y_train, y_test,
-                                    fname="svm_regression_plots.png"):
+    def plot_svm_regression_results(
+        self, svr, X_train, X_test, y_train, y_test, fname="svm_regression_plots.png"
+    ):
         """
         • Predicted vs. actual scatter
         • Residual histogram
@@ -478,9 +482,13 @@ class YouTubeDataAnalyzer:
 
         # 1️⃣  Predicted vs actual
         plt.subplot(1, 2, 1)
-        sns.scatterplot(x=y_test, y=y_pred, alpha=.6)
-        plt.plot([y_test.min(), y_test.max()],
-                 [y_test.min(), y_test.max()], "--", color="grey")
+        sns.scatterplot(x=y_test, y=y_pred, alpha=0.6)
+        plt.plot(
+            [y_test.min(), y_test.max()],
+            [y_test.min(), y_test.max()],
+            "--",
+            color="grey",
+        )
         plt.xlabel("Actual log‑popularity")
         plt.ylabel("Predicted")
         plt.title("Predicted vs. actual")
@@ -489,7 +497,8 @@ class YouTubeDataAnalyzer:
         plt.subplot(1, 2, 2)
         residuals = y_test - y_pred
         sns.histplot(residuals, bins=40, kde=True)
-        plt.xlabel("Residuals"); plt.ylabel("Count")
+        plt.xlabel("Residuals")
+        plt.ylabel("Count")
         plt.title("Residual distribution")
 
         plt.tight_layout()
@@ -548,6 +557,7 @@ class YouTubeDataAnalyzer:
             range(len(feature_importance)),
             [feature_columns[i] for i in indices],
             rotation=45,
+            ha="right",
         )
 
         # 4. Popularity score distribution
@@ -569,7 +579,12 @@ class YouTubeDataAnalyzer:
         plt.xlabel("Channel")
         plt.ylabel("Average Popularity Score")
         plt.title("Average Popularity Score by Channel")
-        plt.xticks(range(len(channel_stats)), channel_stats.index.tolist(), rotation=45)
+        plt.xticks(
+            range(len(channel_stats)),
+            channel_stats.index.tolist(),
+            rotation=45,
+            ha="right",
+        )
 
         # 6. Relationship between duration and popularity score
         plt.subplot(2, 3, 6)
@@ -584,7 +599,7 @@ class YouTubeDataAnalyzer:
 
         plt.tight_layout()
         # plt.show()
-        # plt.savefig(output_file, dpi=300)
+        plt.savefig(output_file, dpi=300)
 
     def generate_insights(self, feature_columns):
         """Generate insights from analysis results"""
@@ -699,7 +714,6 @@ class YouTubeDataAnalyzer:
         print("\n" + "=" * 80)
 
 
-
 def main():
     # Execute analysis
     analyzer = YouTubeDataAnalyzer("./metadata")
@@ -716,6 +730,10 @@ def main():
 
     # Perform PCA
     X_pca, X_scaled, feature_columns = analyzer.perform_pca()
+
+    # Ensure PCA is performed before accessing components_
+    if analyzer.pca is None:
+        raise ValueError("PCA has not been performed. Please call perform_pca() first.")
     number_Components = len(analyzer.pca.components_)
 
     # SVM analysis (classification)
@@ -726,26 +744,37 @@ def main():
     # SVM analysis (regression)
     svm_regressor, r2 = analyzer.analyze_with_svm(X_pca, target_type="regression")
 
-    
-
     # Visualize results (PCA)
-    visualize_results_output = os.path.join(output_dir, f"youtube_analysis_results_{number_Components}components.png")
+    visualize_results_output = os.path.join(
+        output_dir, f"youtube_analysis_results_{number_Components}components.png"
+    )
     analyzer.visualize_results(X_pca, feature_columns, visualize_results_output)
 
-
-    #Visualize results (SVM classification)
+    # Visualize results (SVM classification)
     Xtr_c, Xte_c, ytr_c, yte_c = analyzer._last_split_cls
     analyzer.plot_svm_classification_results(
-        svm_classifier, Xtr_c, Xte_c, ytr_c, yte_c,
+        svm_classifier,
+        Xtr_c,
+        Xte_c,
+        ytr_c,
+        yte_c,
         X_pca_2d=X_pca[:, :2],
-        fname=os.path.join(output_dir, f"svm_classification_{number_Components}components.png")
+        fname=os.path.join(
+            output_dir, f"svm_classification_{number_Components}components.png"
+        ),
     )
 
-    #Visualize results (SVM regression)
+    # Visualize results (SVM regression)
     Xtr_r, Xte_r, ytr_r, yte_r = analyzer._last_split_reg
     analyzer.plot_svm_regression_results(
-        svm_regressor, Xtr_r, Xte_r, ytr_r, yte_r,
-        fname=os.path.join(output_dir, f"svm_regression_{number_Components}components.png")
+        svm_regressor,
+        Xtr_r,
+        Xte_r,
+        ytr_r,
+        yte_r,
+        fname=os.path.join(
+            output_dir, f"svm_regression_{number_Components}components.png"
+        ),
     )
 
     # Generate insights
@@ -755,6 +784,7 @@ def main():
     analyzer.print_pca_components(feature_columns, n_components=5)
 
     print("\nAnalysis complete!")
+
 
 if __name__ == "__main__":
     main()
